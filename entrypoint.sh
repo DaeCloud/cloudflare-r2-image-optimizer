@@ -9,5 +9,6 @@ node /app/thumbnail-worker.js
 
 echo "[$(date -u +"%Y-%m-%dT%H:%M:%SZ")] Starting cron daemon (daily at 02:00 UTC)..."
 
-# Start crond in foreground so the container stays alive
-exec crond -f -l 2
+# Start busybox crond in foreground (-f) with log level 2 (-l 2)
+# -d 8 sends debug output to stderr so logs are visible via docker logs
+exec crond -f -d 8

@@ -1,7 +1,6 @@
 FROM node:22-alpine
 
-# Install dcron (lightweight cron for Alpine)
-RUN apk add --no-cache dcron
+# busybox crond is built into Alpine — no extra packages needed
 
 WORKDIR /app
 
@@ -22,8 +21,9 @@ COPY entrypoint.sh ./
 
 RUN chmod +x entrypoint.sh
 
-# Add cron job — runs daily at 2am
-RUN echo "0 2 * * * node /app/thumbnail-worker.js >> /var/log/thumbnails.log 2>&1" \
-    | crontab -
+# Add cron job — busybox crond reads from /etc/crontabs/<user>
+RUN mkdir -p /etc/crontabs && \
+    echo "0 2 * * * node /app/thumbnail-worker.js >> /var/log/thumbnails.log 2>&1" \
+    > /etc/crontabs/root
 
 CMD ["./entrypoint.sh"]
