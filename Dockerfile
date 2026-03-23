@@ -6,7 +6,16 @@ RUN apk add --no-cache dcron
 WORKDIR /app
 
 COPY package.json ./
-RUN npm install --production
+
+# Sharp bundles native libvips binaries per platform.
+# npm_config_arch ensures the correct pre-built binary is fetched
+# for the target platform rather than compiled under QEMU emulation,
+# which causes the "Illegal instruction" crash on arm64 cross-builds.
+ARG TARGETARCH
+RUN npm install --production \
+    --ignore-scripts \
+    && SHARP_IGNORE_GLOBAL_LIBVIPS=1 \
+       npm rebuild sharp --arch=${TARGETARCH}
 
 COPY thumbnail-worker.js ./
 COPY entrypoint.sh ./
