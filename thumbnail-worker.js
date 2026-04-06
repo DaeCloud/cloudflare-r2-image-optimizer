@@ -31,7 +31,7 @@ import {
 import sharp from "sharp";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
-const THUMBNAIL_WIDTH = 400;
+const THUMBNAIL_WIDTH = 800;
 const THUMBNAIL_QUALITY = 80;
 const THUMBNAIL_PREFIX = "thumbnails/";
 const CONCURRENT_LIMIT = 5; // process N images at a time
