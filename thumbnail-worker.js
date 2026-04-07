@@ -31,9 +31,10 @@ import {
 import sharp from "sharp";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
-const THUMBNAIL_WIDTH = 800;
-const THUMBNAIL_QUALITY = 80;
-const THUMBNAIL_PREFIX = "thumbnails/";
+const THUMBNAIL_WIDTH = 600;
+const THUMBNAIL_QUALITY = 70;
+const PHOTOS_PREFIX = "photos/";
+const THUMBNAILS_PREFIX = "thumbnails/";
 const CONCURRENT_LIMIT = 5; // process N images at a time
 
 const s3 = new S3Client({
@@ -111,7 +112,8 @@ async function withConcurrency(items, limit, fn) {
 // ─── Core logic ───────────────────────────────────────────────────────────────
 
 async function generateThumbnail(key) {
-  const thumbnailKey = `${THUMBNAIL_PREFIX}${key}`;
+  const relativePath = key.slice(PHOTOS_PREFIX.length);
+  const thumbnailKey = `${THUMBNAILS_PREFIX}${relativePath}`;
 
   // Check if thumbnail already exists
   if (await keyExists(thumbnailKey)) {
@@ -127,7 +129,10 @@ async function generateThumbnail(key) {
     // Resize with sharp
     const thumbnailBuffer = await sharp(originalBuffer)
       .resize({ width: THUMBNAIL_WIDTH, withoutEnlargement: true })
-      .webp({ quality: THUMBNAIL_QUALITY })
+      .webp({
+        quality: THUMBNAIL_QUALITY,
+        effort: 6
+      })
       .toBuffer();
 
     // Upload thumbnail
@@ -169,7 +174,7 @@ async function run() {
     .map((o) => o.Key)
     .filter(
       (key) =>
-        !key.startsWith(THUMBNAIL_PREFIX) &&
+        key.startsWith(PHOTOS_PREFIX) &&
         /\.(jpe?g|png|gif|webp|avif|tiff?)$/i.test(key)
     );
 
@@ -184,7 +189,7 @@ async function run() {
 
   const created = results.filter((r) => r.status === "created").length;
   const skipped = results.filter((r) => r.status === "skipped").length;
-  const errors  = results.filter((r) => r.status === "error").length;
+  const errors = results.filter((r) => r.status === "error").length;
 
   console.log(`\nDone. Created: ${created} | Skipped: ${skipped} | Errors: ${errors}`);
   console.log(`[${new Date().toISOString()}] Worker finished.`);
